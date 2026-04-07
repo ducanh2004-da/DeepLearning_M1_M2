@@ -1,0 +1,27 @@
+# Exclude data folders
+M1/data/
+M2/data_Cifar10/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+#pth
+*.pth
