@@ -22,9 +22,9 @@ Mở rộng dự án với các tập dữ liệu chuẩn và phức tạp hơn,
 ### 📜 Các File Thực thi Chính
 | Tên File | Vị trí | Chức năng |
 | :--- | :--- | :--- |
-| `splitdata.py` | Gốc | Tải và chia tập dữ liệu thành Train/Test cho các mô hình cơ bản. |
-| `splitdata_Cifar.py` | Gốc | Tải và chia tập dữ liệu riêng cho CIFAR-10 và CIFAR-100. |
-| `train.py` | Gốc / M1 | Chạy quá trình huấn luyện và kiểm thử (Train & Test) cho mô hình giữa kỳ (100 epochs). |
+| `splitdata.py` | Gốc M1 | Tải và chia tập dữ liệu thành Train/Test cho các mô hình cơ bản. |
+| `splitdata_Cifar.py` | Gốc M1 | Tải và chia tập dữ liệu riêng cho CIFAR-10 và CIFAR-100. |
+| `train.py` | Gốc M1 | Chạy quá trình huấn luyện và kiểm thử (Train & Test) cho mô hình giữa kỳ (100 epochs). |
 | `train_Cifar.py` | `M2/` | Chạy quá trình huấn luyện và kiểm thử (Train & Test) cho mô hình cuối kỳ trên CIFAR (200 epochs). |
 | `app.py` | `M2/` | Triển khai Web App. Cho phép người dùng tải lên một hình ảnh bất kỳ để mô hình dự đoán và trả về nhãn (class) tương ứng. |
 
