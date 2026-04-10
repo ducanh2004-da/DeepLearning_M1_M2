@@ -1,5 +1,4 @@
 # Exclude data folders
-M1/data/
 M2/data_Cifar10/
 
 # Python cache
@@ -23,5 +22,3 @@ ENV/
 .DS_Store
 Thumbs.db
 
-#pth
-*.pth

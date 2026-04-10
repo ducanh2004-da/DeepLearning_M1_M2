@@ -47,8 +47,13 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 # === CHECKPOINT & RESUME LOGIC ===
-checkpoint_path = f'best_M1_{IMG_SIZE}.pth'
-log_file = f'training_log_{IMG_SIZE}.csv'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+checkpoint_dir = os.path.join(BASE_DIR, 'checkpoint(pth)')
+
+os.makedirs(checkpoint_dir, exist_ok=True)
+
+checkpoint_path = os.path.join(checkpoint_dir, f'best_M1_{IMG_SIZE}.pth')
+log_file = os.path.join(BASE_DIR, f'training_log_{IMG_SIZE}.csv')
 
 best_test_acc = 0.0
 best_epoch = 0
@@ -57,10 +62,8 @@ start_epoch = 0
 if RESUME_TRAINING and os.path.exists(checkpoint_path):
     print(f"[*] Đang tải lại checkpoint từ: {checkpoint_path}")
     
-    # FIX 1: Thêm weights_only=True để tắt cảnh báo màu vàng
     checkpoint = torch.load(checkpoint_path, weights_only=True)
     
-    # Load Model Weights
     if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint:
         model.load_state_dict(checkpoint['model_state_dict'])
         print(" -> Đã tải weights từ dạng Dictionary Checkpoint.")
@@ -71,22 +74,19 @@ if RESUME_TRAINING and os.path.exists(checkpoint_path):
         model.load_state_dict(checkpoint.state_dict())
         print(" -> Đã tải weights từ dạng Full Model.")
         
-    # Load Optimizer
     if isinstance(checkpoint, dict) and 'optimizer_state_dict' in checkpoint:
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         print(" -> Đã tải trạng thái Optimizer thành công.")
     else:
         print(" -> ⚠️ Không tìm thấy trạng thái Optimizer. Khởi tạo Optimizer từ đầu.")
         
-    # Load Epoch
     if isinstance(checkpoint, dict) and 'epoch' in checkpoint:
         start_epoch = checkpoint['epoch'] + 1
         print(f" -> Đã tải thành công Epoch. Tiếp tục train từ Epoch {start_epoch}.")
     else:
-        start_epoch = 0  # Sửa thành 0 để đồng bộ vòng lặp for
+        start_epoch = 0  
         print(" -> ⚠️ Không tìm thấy thông tin Epoch. Bắt đầu đếm lại từ Epoch 1.")
         
-    # Load Best Accuracy
     if isinstance(checkpoint, dict) and 'best_acc' in checkpoint:
         best_test_acc = checkpoint['best_acc']
         print(f" -> Đã tải thành công Best Accuracy cũ: {best_test_acc:.2f}%")
@@ -94,7 +94,6 @@ if RESUME_TRAINING and os.path.exists(checkpoint_path):
         best_test_acc = 0.0
         print(" -> ⚠️ Không tìm thấy Best Accuracy. Đặt lại kỷ lục từ 0.0%")
         
-    # Load Best Epoch
     if isinstance(checkpoint, dict) and 'best_epoch' in checkpoint:
         best_epoch = checkpoint['best_epoch']
     else:
@@ -106,7 +105,6 @@ else:
         writer = csv.writer(file)
         writer.writerow(['Epoch', 'Train Loss', 'Train Acc', 'Test Loss', 'Test Acc'])
 
-# === TRAINING LOOP ===
 with open(log_file, mode='a', newline='') as file:
     writer = csv.writer(file)
 
@@ -147,12 +145,10 @@ with open(log_file, mode='a', newline='') as file:
         test_acc_epoch = 100. * test_correct / total_test
         test_loss = test_loss / len(test_loader)
 
-        # --- LƯU CHECKPOINT ĐỂ RESUME SAU NÀY ---
         if test_acc_epoch > best_test_acc:
             best_test_acc = test_acc_epoch
             best_epoch = epoch + 1
             
-            # Từ nay file sẽ được lưu chuẩn dạng Dictionary
             checkpoint_data = {
                 'epoch': epoch,
                 'model_state_dict': model.state_dict(),
@@ -162,7 +158,6 @@ with open(log_file, mode='a', newline='') as file:
             }
             torch.save(checkpoint_data, checkpoint_path)
 
-        # --- LOGGING ---
         current_time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         print(f"{current_time} Epoch {epoch+1}/{EPOCHS} summary:  loss_train={train_loss:.5f},  acc_train={train_acc:.2f}%,  loss_test={test_loss:.5f},  acc_test={test_acc_epoch:.2f}% (best: {best_test_acc:.2f}% @ epoch {best_epoch})")
         
@@ -172,7 +167,6 @@ print(f"\nQuá trình huấn luyện hoàn tất! Best Test Accuracy: {best_test
 
 # === FINAL TESTING PHASE ===
 print("\n--- Đang load lại mô hình tốt nhất để Final Test ---")
-# FIX 2: Đồng bộ hóa cách load file ở cuối chương trình (đề phòng file cũ chưa bị ghi đè)
 checkpoint = torch.load(checkpoint_path, weights_only=True)
 if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint:
     model.load_state_dict(checkpoint['model_state_dict'])

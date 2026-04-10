@@ -1,7 +1,7 @@
 import torch
 
 # Đường dẫn tới file checkpoint của bạn (nhớ sửa lại nếu bạn lưu ở thư mục khác)
-checkpoint_path = r'D:\work\MachineLearning\DeepLearning\Cifar10\SV2026\SV2026\best_M1_CIFAR10_32.pth'
+checkpoint_path = r'D:\work\MachineLearning\DeepLearning\Cifar10\SV2026\SV2026\M2\checkpoint(pth)\best_M2_CIFAR10_32.pth'
 
 # Đọc file bằng torch.load
 # Lưu ý: Thêm map_location='cpu' là một thói quen tốt để có thể mở file trên bất kỳ máy nào, kể cả máy không có GPU

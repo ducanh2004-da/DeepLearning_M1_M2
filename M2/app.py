@@ -71,7 +71,7 @@ CIFAR10_CLASSES = (
 IMG_SIZE = 32
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-CHECKPOINT_PATH = str(BASE_DIR / "best_M1_CIFAR10_32.pth")
+CHECKPOINT_PATH = str(BASE_DIR / "checkpoint(pth)" / "best_M2_CIFAR10_32.pth")
 
 
 # ============================================================================
@@ -181,15 +181,12 @@ def predict(model, image_tensor: torch.Tensor) -> tuple:
     with torch.no_grad():
         image_tensor = image_tensor.to(DEVICE)
         
-        # trả về mảng đánh giá cho từng lớp (10 số)
         logits = model(image_tensor)
-        print(f"Logits: {logits.cpu().numpy()}")  # Debug: In ra logits thô trước softmax
+        print(f"Logits: {logits.cpu().numpy()}")  
         
-        # do logits có thể âm nên cần softmax để chuyển thành xác suất (0-1)
         probabilities = torch.softmax(logits, dim=1)
-        print(f"Probabilities: {probabilities.cpu().numpy()}")  # Debug: In ra xác suất sau softmax
+        print(f"Probabilities: {probabilities.cpu().numpy()}")  
         
-        # từ mảng xác suất lấy phần trăm cao nhất kèm
         confidence, predicted_idx = torch.max(probabilities, 1)
         
         predicted_class = CIFAR10_CLASSES[predicted_idx.item()]

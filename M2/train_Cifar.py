@@ -46,12 +46,16 @@ test_loader = DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=False)
 model = M1_CNN(variant=IMG_SIZE, num_classes=10).to(DEVICE)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.AdamW(model.parameters(), lr=0.001, weight_decay=1e-4)
-# điều chỉnh learning rate theo tg
 scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
 
 # === CHECKPOINT & RESUME LOGIC ===
-checkpoint_path = f'best_M1_CIFAR10_{IMG_SIZE}.pth'
-log_file = f'training_log_CIFAR10_{IMG_SIZE}.csv'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+checkpoint_dir = os.path.join(BASE_DIR, 'checkpoint(pth)')
+
+os.makedirs(checkpoint_dir, exist_ok=True)
+
+checkpoint_path = os.path.join(checkpoint_dir, f'best_M2_CIFAR10_{IMG_SIZE}.pth')
+log_file = os.path.join(BASE_DIR, f'training_log_CIFAR10_{IMG_SIZE}.csv')
 
 best_test_acc = 0.0
 best_epoch = 0
@@ -67,13 +71,11 @@ if RESUME_TRAINING and os.path.exists(checkpoint_path):
     best_epoch = checkpoint.get('best_epoch', start_epoch)
     print(f"[*] Đã tải thành công. Tiếp tục huấn luyện từ Epoch {start_epoch+1}. Best Acc hiện tại: {best_test_acc:.2f}%\n")
 else:
-    # Nếu train từ đầu, khởi tạo lại file log
     with open(log_file, mode='w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(['Epoch', 'Train Loss', 'Train Acc', 'Test Loss', 'Test Acc'])
 
 # === TRAINING LOOP ===
-# Mở file log ở chế độ 'a' (append) để ghi tiếp nếu đang resume
 with open(log_file, mode='a', newline='') as file:
     writer = csv.writer(file)
 
@@ -81,21 +83,17 @@ with open(log_file, mode='a', newline='') as file:
         # ---------- TRAIN PHASE ----------
         model.train()
         train_loss, train_correct, total_train = 0, 0, 0
-        # Đưa lần lượt từng ảnh batch vào
         for inputs, labels in train_loader:
             inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)
-            # Xóa hướng dẫn để tránh cộng dồn lỗi
             optimizer.zero_grad()
             outputs = model(inputs)
             loss = criterion(outputs, labels)
-            # thương, phạt và điều chỉnh trọng số
             loss.backward()
             optimizer.step()
             
             train_loss += loss.item()
             _, predicted = outputs.max(1)
             total_train += labels.size(0)
-            # so sánh với class đúng
             train_correct += predicted.eq(labels).sum().item()
             
         train_acc = 100. * train_correct / total_train
@@ -133,7 +131,6 @@ with open(log_file, mode='a', newline='') as file:
             }
             torch.save(checkpoint, checkpoint_path)
 
-        # --- LOGGING FORMAT THEO YÊU CẦU ---
         current_time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         print(f"{current_time} Epoch {epoch+1}/{EPOCHS} summary:  loss_train={train_loss:.5f},  acc_train={train_acc:.2f}%,  loss_test={test_loss:.5f},  acc_test={test_acc_epoch:.2f}% (best: {best_test_acc:.2f}% @ epoch {best_epoch})")
         
