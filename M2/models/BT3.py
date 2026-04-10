@@ -6,13 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# Giả định module SE existings, tôi sẽ import hoặc tạo một mockup nếu không có.
-# Ở đây tôi tạo mockup cho module SE chuẩn để mã hoàn chỉnh.
-# Bạn nên import từ module thực tế của mình: `from models.SE_Attention import SE`
-# Hoặc comment dòng import và mockup này, giữ nguyên code của mình.
-# from models.SE_Attention import SE
-
-# Mock-up cho lớp SE chuẩn (Squeeze-and-Excitation), thay thế bằng module thực tế của bạn
+# SE giúp nhận biết kênh nào quan trọng
 class SE(nn.Module):
     def __init__(self, channels, reduction_ratio=16):
         super().__init__()
@@ -97,7 +91,7 @@ class NetBT3(nn.Module):
         # STEM
         # Sơ đồ: I=224, C=3 -> Conv k=3x3, S=stride_chosen, P=1, out_channels=32
         # Tôi sẽ loại bỏ F.relu cho Conv đầu tiên trong forward pass vì stem conv này là linear. Pw1 của block sẽ xử lý.
-        self.conv1 = nn.Conv2d(in_channels = 3, out_channels=32, kernel_size=3, stride=self.stem_stride, padding=1)
+        #self.conv1 = nn.Conv2d(in_channels = 3, out_channels=32, kernel_size=3, stride=self.stem_stride, padding=1)
 
         # Stages and Blocks
         # Ghi chú in-channels và out-channels khớp sơ đồ BT3 blocks:

@@ -12,13 +12,10 @@ import numpy as np
 from pathlib import Path
 import sys
 
-# 1. Lấy đường dẫn tuyệt đối của thư mục chứa file app.py (tức là thư mục M2)
 BASE_DIR = Path(__file__).parent
 
-# 2. Thêm thư mục M2 vào hệ thống để Python có thể import từ thư mục 'models'
 sys.path.insert(0, str(BASE_DIR))
 
-# Import model
 from models.model_M2 import M1_CNN
 
 # ============================================================================
@@ -36,6 +33,27 @@ CIFAR10_CLASSES = (
     "Ship",
     "Truck"
 )
+
+#===========================================================================
+# Cifar 100
+#===========================================================================
+# CIFAR10_CLASSES = (
+#     "Apple", "Aquarium Fish", "Baby", "Bear", "Beaver", "Bed", "Bee", "Beetle", 
+#     "Bicycle", "Bottle", "Bowl", "Boy", "Bridge", "Bus", "Butterfly", "Camel", 
+#     "Can", "Castle", "Caterpillar", "Cattle", "Chair", "Chimpanzee", "Clock", 
+#     "Cloud", "Cockroach", "Couch", "Crab", "Crocodile", "Cup", "Dinosaur", 
+#     "Dolphin", "Elephant", "Flatfish", "Forest", "Fox", "Girl", "Hamster", 
+#     "House", "Kangaroo", "Keyboard", "Lamp", "Lawn Mower", "Leopard", "Lion", 
+#     "Lizard", "Lobster", "Man", "Maple Tree", "Motorcycle", "Mountain", "Mouse", 
+#     "Mushroom", "Oak Tree", "Orange", "Orchid", "Otter", "Palm Tree", "Pear", 
+#     "Pickup Truck", "Pine Tree", "Plain", "Plate", "Poppy", "Porcupine", 
+#     "Possum", "Rabbit", "Raccoon", "Ray", "Road", "Rocket", "Rose", 
+#     "Sea", "Seal", "Shark", "Shrew", "Skunk", "Skyscraper", "Snail", "Snake", 
+#     "Spider", "Squirrel", "Streetcar", "Sunflower", "Sweet Pepper", "Table", 
+#     "Tank", "Telephone", "Television", "Tiger", "Tractor", "Train", "Trout", 
+#     "Tulip", "Turtle", "Wardrobe", "Whale", "Willow Tree", "Wolf", "Woman", 
+#     "Worm"
+# )
 #===========================================================================
 # 5 class animal: cat, dog, ELEPHANT, HORSE, LION
 #===========================================================================
@@ -53,10 +71,8 @@ CIFAR10_CLASSES = (
 IMG_SIZE = 32
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# 3. KHOÁ CỨNG ĐƯỜNG DẪN: Chỉ định rõ file .pth nằm ngay trong thư mục BASE_DIR (M2)
 CHECKPOINT_PATH = str(BASE_DIR / "best_M1_CIFAR10_32.pth")
 
-# (GIỮ NGUYÊN CÁC PHẦN MODEL LOADING, PREPROCESSING, INFERENCE VÀ UI BÊN DƯỚI)
 
 # ============================================================================
 # MODEL LOADING (CACHED)
@@ -77,18 +93,14 @@ def load_model(checkpoint_path=CHECKPOINT_PATH):
         Exception: If there's an error loading the checkpoint.
     """
     try:
-        # Check if checkpoint exists
         if not Path(checkpoint_path).exists():
             raise FileNotFoundError(f"Checkpoint file not found at: {checkpoint_path}")
         
-        # Initialize model
         model = M1_CNN(variant=IMG_SIZE, num_classes=len(CIFAR10_CLASSES))
         
-        # Load checkpoint with weights_only=True for security
         checkpoint = torch.load(checkpoint_path, map_location=DEVICE, weights_only=True)
         
         # Extract model state dict from checkpoint (old pth format)
-        # --- LOGIC THÔNG MINH: Đọc mọi loại file checkpoint ---
         # if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint:
         #     model.load_state_dict(checkpoint['model_state_dict'])
         # elif isinstance(checkpoint, dict):
@@ -100,7 +112,6 @@ def load_model(checkpoint_path=CHECKPOINT_PATH):
         model_state_dict = checkpoint['model_state_dict']
         model.load_state_dict(model_state_dict)
         
-        # Move model to device and set to evaluation mode
         model = model.to(DEVICE)
         model.eval()
         
@@ -143,15 +154,12 @@ def preprocess_image(image: Image.Image) -> torch.Tensor:
     Returns:
         torch.Tensor: Preprocessed image tensor of shape (1, 3, 32, 32).
     """
-    # Convert image to RGB (handles grayscale, RGBA, etc.)
     if image.mode != 'RGB':
         image = image.convert('RGB')
     
-    # Apply preprocessing transforms
     transform = get_preprocessing_transforms()
     image_tensor = transform(image)
     
-    # Add batch dimension: (3, 32, 32) -> (1, 3, 32, 32)
     image_tensor = image_tensor.unsqueeze(0)
     
     return image_tensor
@@ -171,16 +179,17 @@ def predict(model, image_tensor: torch.Tensor) -> tuple:
         tuple: (predicted_class_name, confidence_percentage)
     """
     with torch.no_grad():
-        # Move tensor to device
         image_tensor = image_tensor.to(DEVICE)
         
-        # Forward pass
+        # trả về mảng đánh giá cho từng lớp (10 số)
         logits = model(image_tensor)
+        print(f"Logits: {logits.cpu().numpy()}")  # Debug: In ra logits thô trước softmax
         
-        # Apply softmax to get probabilities
+        # do logits có thể âm nên cần softmax để chuyển thành xác suất (0-1)
         probabilities = torch.softmax(logits, dim=1)
+        print(f"Probabilities: {probabilities.cpu().numpy()}")  # Debug: In ra xác suất sau softmax
         
-        # Get the class with highest probability
+        # từ mảng xác suất lấy phần trăm cao nhất kèm
         confidence, predicted_idx = torch.max(probabilities, 1)
         
         predicted_class = CIFAR10_CLASSES[predicted_idx.item()]
@@ -194,7 +203,6 @@ def predict(model, image_tensor: torch.Tensor) -> tuple:
 def main():
     """Main Streamlit app function."""
     
-    # Page configuration
     st.set_page_config(
         page_title="CIFAR-10 Classifier",
         page_icon="🖼️",
@@ -202,7 +210,6 @@ def main():
         initial_sidebar_state="expanded"
     )
     
-    # Custom styling
     st.markdown("""
     <style>
         .main {
@@ -217,7 +224,6 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
-    # Title and description
     st.title("🖼️ CIFAR-10 Image Classifier")
     st.markdown("""
     This web app classifies images into one of the **10 CIFAR-10 categories**.
@@ -229,7 +235,6 @@ def main():
     
     st.divider()
     
-    # Sidebar information
     with st.sidebar:
         st.header("ℹ️ About")
         st.info(
@@ -260,19 +265,17 @@ def main():
     
     st.divider()
     
-    # File uploader
     uploaded_file = st.file_uploader(
         "📤 Upload an image",
         type=["png", "jpg", "jpeg"],
         help="Supported formats: PNG, JPG, JPEG"
     )
     
+    # load image
     if uploaded_file is not None:
         try:
-            # Load image
             image = Image.open(uploaded_file)
             
-            # Display uploaded image
             col1, col2 = st.columns(2)
             
             with col1:
@@ -281,17 +284,13 @@ def main():
             
             # Preprocess and predict
             with st.spinner("Analyzing image..."):
-                # Preprocess image
                 image_tensor = preprocess_image(image)
-                
-                # Get prediction
                 predicted_class, confidence, probabilities = predict(model, image_tensor)
             
             # Display results
             with col2:
                 st.subheader("🎯 Prediction Results")
                 
-                # Main prediction display
                 st.metric(
                     label="Predicted Class",
                     value=predicted_class,
@@ -306,7 +305,6 @@ def main():
                 
             st.divider()
             
-            # Display all class probabilities
             st.subheader("📊 Class Probabilities")
             
             # Create probability display
@@ -339,7 +337,6 @@ def main():
     else:
         st.info("👆 Please upload an image to get started!")
         
-        # Display sample information
         with st.expander("📚 Learn more about CIFAR-10"):
             st.markdown("""
             **CIFAR-10** is a dataset of 60,000 32×32 color images in 10 classes:
@@ -360,6 +357,5 @@ def main():
 # MAIN ENTRY POINT
 # ============================================================================
 if __name__ == "__main__":
-    # Import pandas here to avoid import errors if not needed
     import pandas as pd
     main()

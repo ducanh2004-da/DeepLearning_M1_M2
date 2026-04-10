@@ -10,13 +10,13 @@ from datetime import datetime
 from models.model_M2 import M1_CNN
 
 # === CONFIGURATION ===
-IMG_SIZE = 32 # Tối ưu cho CIFAR-10 (ảnh gốc 32x32)
+IMG_SIZE = 32 
 BATCH_SIZE = 32
 EPOCHS = 200
-# Trỏ tới thư mục CIFAR-10
+
 DATA_DIR = r'D:\work\MachineLearning\DeepLearning\Cifar10\SV2026\SV2026\M2\data_Cifar10'
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-RESUME_TRAINING = True # Đổi thành True nếu bạn muốn train tiếp từ checkpoint cũ
+RESUME_TRAINING = True 
 
 print(f"Training on device: {DEVICE}")
 
@@ -43,15 +43,13 @@ train_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True)
 test_loader = DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=False)
 
 # === MODEL SETUP ===
-# Cực kỳ quan trọng: CIFAR-10 có 10 classes
 model = M1_CNN(variant=IMG_SIZE, num_classes=10).to(DEVICE)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.AdamW(model.parameters(), lr=0.001, weight_decay=1e-4)
-
+# điều chỉnh learning rate theo tg
 scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
 
 # === CHECKPOINT & RESUME LOGIC ===
-# Đổi tên file lưu trữ để không bị lẫn với project cũ
 checkpoint_path = f'best_M1_CIFAR10_{IMG_SIZE}.pth'
 log_file = f'training_log_CIFAR10_{IMG_SIZE}.csv'
 
@@ -59,7 +57,6 @@ best_test_acc = 0.0
 best_epoch = 0
 start_epoch = 0
 
-# Nếu bật RESUME_TRAINING và file checkpoint tồn tại, tiến hành load lại trạng thái
 if RESUME_TRAINING and os.path.exists(checkpoint_path):
     print(f"[*] Đang tải lại checkpoint từ: {checkpoint_path}")
     checkpoint = torch.load(checkpoint_path)
@@ -84,17 +81,21 @@ with open(log_file, mode='a', newline='') as file:
         # ---------- TRAIN PHASE ----------
         model.train()
         train_loss, train_correct, total_train = 0, 0, 0
+        # Đưa lần lượt từng ảnh batch vào
         for inputs, labels in train_loader:
             inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)
+            # Xóa hướng dẫn để tránh cộng dồn lỗi
             optimizer.zero_grad()
             outputs = model(inputs)
             loss = criterion(outputs, labels)
+            # thương, phạt và điều chỉnh trọng số
             loss.backward()
             optimizer.step()
             
             train_loss += loss.item()
             _, predicted = outputs.max(1)
             total_train += labels.size(0)
+            # so sánh với class đúng
             train_correct += predicted.eq(labels).sum().item()
             
         train_acc = 100. * train_correct / total_train
@@ -136,7 +137,6 @@ with open(log_file, mode='a', newline='') as file:
         current_time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         print(f"{current_time} Epoch {epoch+1}/{EPOCHS} summary:  loss_train={train_loss:.5f},  acc_train={train_acc:.2f}%,  loss_test={test_loss:.5f},  acc_test={test_acc_epoch:.2f}% (best: {best_test_acc:.2f}% @ epoch {best_epoch})")
         
-        # Ghi vào file csv
         writer.writerow([epoch+1, train_loss, train_acc, test_loss, test_acc_epoch])
             
 print(f"\nQuá trình huấn luyện hoàn tất! Best Test Accuracy: {best_test_acc:.2f}% tại epoch {best_epoch}")

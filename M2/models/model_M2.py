@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 import torch
 import torch.nn as nn
-from models.BT3 import BlockBT3 # Import block của bạn từ file BT3.py
+from models.BT3 import BlockBT3 
 
 class Downsample(nn.Module):
     def __init__(self, in_channels, out_channels):
         super().__init__()
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=2, padding=1)
+        # batchNorm sẽ tính toán lại giá trị trung bình và phương sai của feature map trong một lô (batch), giúp ổn định quá trình huấn luyện
         self.bn = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU()
     def forward(self, x):
@@ -18,7 +19,6 @@ class M1_CNN(nn.Module):
         self.variant = variant
         
         if variant == 224:
-            # Variant 1: Input 224x224x3
             self.stem = nn.Sequential(
                 nn.Conv2d(3, 64, kernel_size=3, padding=1),
                 nn.BatchNorm2d(64),
@@ -41,7 +41,6 @@ class M1_CNN(nn.Module):
             )
             
         elif variant == 32:
-            # Variant 2: Input 32x32x3 (Điều chỉnh nhẹ để khớp kích thước trong sơ đồ)
             self.stem = nn.Sequential(
                 nn.Conv2d(3, 64, kernel_size=3, padding=1),
                 nn.BatchNorm2d(64),
@@ -58,7 +57,7 @@ class M1_CNN(nn.Module):
                 Downsample(512, 1024)                  # -> 2x2x1024 (Tiệm cận 1x1)
             )
 
-        self.global_avg_pool = nn.AdaptiveAvgPool2d(1) # GAP -> 1x1x1024
+        self.global_avg_pool = nn.AdaptiveAvgPool2d(1) # -> 1x1x1024
         self.dropout = nn.Dropout(0.3)
         self.fc = nn.Linear(1024, num_classes)
 
@@ -69,4 +68,4 @@ class M1_CNN(nn.Module):
         x = torch.flatten(x, 1)
         x = self.dropout(x)
         x = self.fc(x)
-        return x # Softmax được tính gộp trong nn.CrossEntropyLoss
+        return x 

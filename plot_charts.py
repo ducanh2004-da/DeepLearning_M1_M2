@@ -44,4 +44,4 @@ def plot_metrics(csv_file, size):
     plt.show()
 
 # Chạy thử nghiệm
-plot_metrics('training_log_32.csv', 32)
+plot_metrics('training_log_224.csv', 224)
