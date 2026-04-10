@@ -1,7 +1,7 @@
 # 🖼️ Image Classification Project - CNN Models
 
-**Tác giả:** Lê Minh Nguyệt  
-**Trường:** Đại học Sư phạm Kỹ thuật TP.HCM (HCMUTE)  
+**Tác giả:** Đỗ Đức Anh, Lã Huy Hoàng, Lê Huy Hoàng  
+**Trường:** Đại học Công nghệ Kỹ thuật TP.HCM (HCMUTE)  
 
 Dự án này bao gồm hai giai đoạn chính (Giữa kỳ và Cuối kỳ), tập trung vào việc xây dựng, huấn luyện và đánh giá các mô hình Mạng nơ-ron tích chập (CNN) để phân loại hình ảnh trên nhiều tập dữ liệu khác nhau.
 
